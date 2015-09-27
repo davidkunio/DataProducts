@@ -1,0 +1,91 @@
+---
+title: "ReadMe"
+author: "David Matsumura"
+date: "September 27, 2015"
+output: html_document
+---
+
+#Baseball Team Chooser Application
+
+##Summary
+This is an application built to help a person pick a baseball team.  It takes 3 inputs from the user: League, the minimun number of wins and if the team is playoff bound.
+
+Then it filters the full team list based on that criteria and picks randomly from the remaining group.  It returns the logo of the team that it lands on.
+
+##Summary of Program
+
+###UI.R
+
+```{r eval=FALSE}
+library(shiny)
+
+shinyUI(pageWithSidebar(
+  headerPanel("For Whom Should I Cheer?"),
+  sidebarPanel(
+    selectInput("league", "Which League?", 
+                choices = c("National",
+                           "American")),
+    sliderInput('wins',"Minimun Number of Wins",min=1,max=100,value=50),
+    radioButtons("playoffs", "Headed for the Playoffs?",
+                 choices = c('Yes','Does not Matter'), selected = NULL, inline = FALSE)
+    ),
+  mainPanel(
+    imageOutput('image')
+  )
+))
+```
+
+It is a very simple app.  It creates the header (headerPanel). There are 3 inputs in the sidebar panel, one select input (dropdown) one slider input and one radio button.  Then it creates a spot for the output.
+
+###Server.R
+
+
+```{r, eval=FALSE}
+library(shiny)
+
+wd.datapath = paste0(getwd(),"/data")
+wd.init = getwd()
+setwd(wd.datapath)
+
+teamlistinitial <- read.csv('standings.csv',stringsAsFactors=FALSE)
+
+setwd(wd.init)
+```
+
+The server code first has to build the team datalist out of a server side CSV file.
+
+```{r eval=FALSE}
+shinyServer(function(input, output) {
+  data <- reactive({ 
+    LG <- switch(input$league,
+                  "National" = 'NL',
+                  "American" = 'AL')
+    PLAY <- switch(input$playoffs,
+                 "Yes" = 10,
+                 "No" = 32)
+    teamlist <- teamlistinitial
+    teamlist <- subset(teamlist,teamlist$Lg==LG)
+    teamlist <- subset(teamlist,teamlist$W > input$wins)
+    teamlist <- subset(teamlist,Rk < PLAY)
+    team <- teamlist$Tm[sample(1:length(teamlist$Tm),1)]
+  })=
+```
+
+To actually evaluate the inputs, the server function first translates them into values that can be applied to the source dataset.  Then it applies the filters and subsets the team list.
+
+```{r eval=FALSE}
+  output$image <- renderImage({
+    if (is.null(input$league))
+      return(NULL)
+    src_link <- paste('images/',team,'.jpg',sep='')
+    alt_txt <- team
+    return(list(
+        src = src_link,
+        contentType = "image/jpg",
+        alt = alt_txt
+      ))
+    }, deleteFile = FALSE)
+})
+```
+
+After the team is picked, the server calls up the matching logo from the image folder and pushes it to the output.

@@ -4,7 +4,7 @@ wd.datapath = paste0(getwd(),"/data")
 wd.init = getwd()
 setwd(wd.datapath)
 
-teamlist <- read.csv('standings.csv',stringsAsFactors=FALSE)
+teamlistinitial <- read.csv('standings.csv',stringsAsFactors=FALSE)
 
 setwd(wd.init)
 
@@ -16,6 +16,7 @@ shinyServer(function(input, output) {
     PLAY <- switch(input$playoffs,
                  "Yes" = 10,
                  "No" = 32)
+    teamlist <- teamlistinitial
     teamlist <- subset(teamlist,teamlist$Lg==LG)
     teamlist <- subset(teamlist,teamlist$W > input$wins)
     teamlist <- subset(teamlist,Rk < PLAY)
