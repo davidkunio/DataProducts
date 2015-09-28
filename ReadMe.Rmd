@@ -74,18 +74,19 @@ shinyServer(function(input, output) {
 To actually evaluate the inputs, the server function first translates them into values that can be applied to the source dataset.  Then it applies the filters and subsets the team list.
 
 ```{r eval=FALSE}
-  output$image <- renderImage({
-    if (is.null(input$league))
-      return(NULL)
-    src_link <- paste('images/',team,'.jpg',sep='')
-    alt_txt <- team
+  output$team_image <- renderImage({
+    src_link <- paste('images/',team(),'.jpg',sep='')
+    alt_txt <- team()
     return(list(
         src = src_link,
         contentType = "image/jpg",
         alt = alt_txt
       ))
     }, deleteFile = FALSE)
+  
 })
 ```
 
 After the team is picked, the server calls up the matching logo from the image folder and pushes it to the output.
+
+One useful tip: The ouput of the reactive function is a closure. It is not subsettable, nor is it coerceable to a character.  The best way to use it is to call it as is with '()' after.  (See team() being called to get the image.)
